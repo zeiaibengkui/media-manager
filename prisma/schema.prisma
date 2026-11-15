@@ -1,0 +1,110 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Media {
+  paths       MediaPath[]
+  tags        MediaTag[]
+  albums      AlbumMedia[]
+  fileHash    String   @id
+  filePath    String
+  fileName    String
+  mimeType    String
+  sizeBytes   BigInt
+  width       Int
+  height      Int
+  dhash64     String?  @db.VarChar(16)
+  phash64     String?  @db.VarChar(16)
+  title       String?  @db.Text
+  description String?  @db.Text
+  category    String?
+  favorite    Boolean  @default(false)
+  exif        Json?
+  capturedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([filePath])
+  @@index([favorite])
+  @@index([category])
+}
+
+model MediaPath {
+  id        String   @id @default(uuid())
+  mediaHash String
+  filePath  String   @unique
+  fileName  String
+  createdAt DateTime @default(now())
+  media     Media    @relation(fields: [mediaHash], references: [fileHash], onDelete: Cascade)
+
+  @@index([mediaHash])
+}
+
+model DuplicateDecision {
+  leftHash  String
+  rightHash String
+  decision  String
+  createdAt DateTime @default(now())
+
+  @@id([leftHash, rightHash])
+}
+
+model MediaTag {
+  id        String   @id @default(uuid())
+  mediaHash String
+  name      String
+  createdAt DateTime @default(now())
+  media     Media    @relation(fields: [mediaHash], references: [fileHash], onDelete: Cascade)
+
+  @@unique([mediaHash, name])
+  @@index([name])
+}
+
+model Album {
+  id        String       @id @default(uuid())
+  name      String       @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  media     AlbumMedia[]
+}
+
+model AlbumMedia {
+  albumId   String
+  mediaHash String
+  createdAt DateTime @default(now())
+  album     Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  media     Media    @relation(fields: [mediaHash], references: [fileHash], onDelete: Cascade)
+
+  @@id([albumId, mediaHash])
+  @@index([mediaHash])
+}
+
+model ScanJobRecord {
+  id         String    @id
+  status     String
+  request    Json
+  summary    Json?
+  events     Json
+  error      String?
+  retryOf    String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  startedAt  DateTime?
+  finishedAt DateTime?
+}
+
+model AppSettings {
+  id            String   @id @default("default")
+  aiPrompt      String   @db.Text
+  concurrency   Int
+  nearThreshold Float
+  skipAi        Boolean
+  skipExif      Boolean
+  updatedAt     DateTime @updatedAt
+}

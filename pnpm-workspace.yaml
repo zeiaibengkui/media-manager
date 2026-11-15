@@ -1,0 +1,8 @@
+packages:
+  - media-manager-webui
+
+allowBuilds:
+  '@prisma/engines': true
+  '@swc/core': true
+  esbuild: true
+  prisma: true

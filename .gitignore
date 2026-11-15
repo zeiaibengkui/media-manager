@@ -1,0 +1,8 @@
+node_modules/
+.env
+data/
+src/generated/
+media-manager-webui/dist/
+media-manager-webui/node_modules/
+*.log
+.DS_Store
